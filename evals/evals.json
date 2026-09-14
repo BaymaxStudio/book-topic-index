@@ -1,0 +1,74 @@
+{
+  "skill_name": "book-topic-index",
+  "evals": [
+    {
+      "id": 0,
+      "name": "scanned-excerpt-ideology",
+      "prompt": "我这儿有一本书的扫描节选，文件在 /Users/baymax/Documents/Baymax Studio/Projects/book-topic-index/book-topic-index/evals/fixtures/book-excerpt-p50-85.pdf。帮我把里面所有讲「意识形态」的地方找出来，要标清楚是书里的第几页、原文是什么。最后给我一份 Word 版索引，再给一份把那些地方标黄了的 PDF。",
+      "expected_output": "书内页码 + 原文索引；正确校准出该节选的页码偏移为 -40；覆盖 6 页 33 处",
+      "files": [
+        "/Users/baymax/Documents/Baymax Studio/Projects/book-topic-index/book-topic-index/evals/fixtures/book-excerpt-p50-85.pdf"
+      ],
+      "assertions": [
+        {
+          "text": "校准出的页码偏移为 -40（PDF物理页 − 书内印刷页码）"
+        },
+        {
+          "text": "命中书内页码集合为 {42,53,54,55,69,73}（6 页）"
+        },
+        {
+          "text": "命中段落数 12，全书出现 33 处，无漏检"
+        },
+        {
+          "text": "产出了 .docx 索引文件"
+        },
+        {
+          "text": "产出了带黄色高亮的 PDF"
+        },
+        {
+          "text": "Word 中关键词使用了独立颜色标记（朱色 A8322A）"
+        }
+      ]
+    },
+    {
+      "id": 1,
+      "name": "text-pdf-education",
+      "prompt": "这个 PDF 是文字版的：/Users/baymax/Documents/Baymax Studio/Projects/book-topic-index/book-topic-index/evals/fixtures/sample-text.pdf，帮我把提到「教育」的段落都整理出来，带上页码。",
+      "expected_output": "不做 OCR；命中 2 处，都在第 1 页",
+      "files": [
+        "/Users/baymax/Documents/Baymax Studio/Projects/book-topic-index/book-topic-index/evals/fixtures/sample-text.pdf"
+      ],
+      "assertions": [
+        {
+          "text": "识别为文字版 PDF 并直接取文本层（未调用 OCR）"
+        },
+        {
+          "text": "命中 2 处，页码为 1"
+        },
+        {
+          "text": "产出了 .docx 索引文件"
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "name": "word-national-security",
+      "prompt": "我转了份 Word：/Users/baymax/Documents/Baymax Studio/Projects/book-topic-index/book-topic-index/evals/fixtures/sample-paper.docx，想看看里面讲「国家安全」的段落都有哪些，整理成一份清单。",
+      "expected_output": "命中 22 段；因无 PDF 参照，不应编造页码",
+      "files": [
+        "/Users/baymax/Documents/Baymax Studio/Projects/book-topic-index/book-topic-index/evals/fixtures/sample-paper.docx"
+      ],
+      "assertions": [
+        {
+          "text": "命中 22 个段落"
+        },
+        {
+          "text": "没有编造书内页码（该 Word 没有对应 PDF，页码应为空或明确标注未提供）"
+        },
+        {
+          "text": "产出了清单文件"
+        }
+      ]
+    }
+  ]
+}

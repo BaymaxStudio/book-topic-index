@@ -1,0 +1,15 @@
+{
+  "name": "baymaxstudio-skills",
+  "owner": {
+    "name": "BaymaxStudio",
+    "url": "https://github.com/BaymaxStudio"
+  },
+  "plugins": [
+    {
+      "name": "book-topic-index",
+      "source": "./",
+      "description": "把一本扫描版学术书变成页码准确、可对账、可直接引用的主题索引（书内印刷页码校准 + 零漏检审计 + 原书高亮）",
+      "version": "1.0.0"
+    }
+  ]
+}
