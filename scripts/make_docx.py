@@ -139,7 +139,10 @@ def main():
     keys = sorted(groups, key=lambda k: ({"页": 0, "PDF": 1, "无": 2}[k[0]], k[1]))
     pages = [k[1] for k in keys if k[0] == "页"]
     has_pages = bool(pages)
-    total_occ = sum(r["命中次数"] for r in rows)
+    # "全书出现"只算字面层，和 统计.json / 审计 的口径保持一致；
+    # 相关词层单独成一项，不能混进来（否则封面数字对不上审计结论）。
+    total_occ = sum(r["命中次数"] for r in rows if r.get("层级", "字面") == "字面")
+    total_rel = sum(r["命中次数"] for r in rows if r.get("层级") == "相关")
     offs = Counter(r["PDF页"] - r["书内页码"] for r in body if r["书内页码"])
     offset = offs.most_common(1)[0][0] if offs else 0
 
@@ -177,7 +180,9 @@ def main():
     p = P(doc, after=10, line=1.5)
     stat = [(str(len(body)), "命中段落")]
     stat.append((str(len(pages)), "分布页") if has_pages else (str(len(keys)), "命中分组"))
-    stat.append((str(total_occ), "全书出现"))
+    stat.append((str(total_occ), "字面出现"))
+    if total_rel:
+        stat.append((str(total_rel), "相关词"))
     stat.append((str(offset), "页码偏移") if has_pages else ("—", "页码偏移"))
     for i, (num, lab) in enumerate(stat):
         if i: R(p.add_run("　·　"), HEI, 10, SILVER_C)
