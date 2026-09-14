@@ -217,6 +217,7 @@ def main():
     for p_ in doc.paragraphs:
         p_.style = meta
 
+    bid = 0
     for key in keys:
         rs = groups[key]
         kind, val = key
@@ -247,7 +248,10 @@ def main():
         lp = left.paragraphs[0]
         lp.paragraph_format.space_after = Pt(0); lp.paragraph_format.line_spacing = 1.0
         R(lp.add_run(rail_main), HEI, 17, INDIGO, True)
-        bookmark(lp, anchor, abs(hash(anchor)) % 100000)
+        # 书签 id 必须全局唯一：用 hash 会碰撞（95 组时分组的生日悖论就不小），
+        # 一旦碰撞 officecli 会报 duplicated id，Word 也可能打不开。
+        bid += 1
+        bookmark(lp, anchor, bid)
         lp2 = left.add_paragraph()
         lp2.paragraph_format.space_before = Pt(1); lp2.paragraph_format.line_spacing = 1.0
         R(lp2.add_run(rail_sub), HEI, 7.5, SLATE, caps=20)
