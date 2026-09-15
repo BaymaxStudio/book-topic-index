@@ -86,7 +86,7 @@ python3 scripts/pdf_lines.py --pdf book.pdf --out out/ --noise book.json
 脚本先探测文字层（抽前几页、去噪声后数字符，≥200 算文字版），再自动分流：
 
 - **文字版**：pdftotext -bbox 取词级坐标，按纵向重叠合成行，秒级完成；
-- **扫描版**：调用 bin/ocrpdf（macOS Vision 框架，300 dpi，中文）。
+- **扫描版**：走 OCR 后端。`--ocr auto`（默认）在 macOS 用 bin/ocrpdf（Vision），其余平台用 scripts/ocr_rapid.py（RapidOCR，内置离线模型）；也可 `--ocr vision|rapid` 强制。
 
 两条路产出同一个 lines.jsonl，下游不必关心来源。
 
@@ -120,13 +120,15 @@ python3 scripts/audit.py --lines out/lines.jsonl --hits out/命中明细.json --
 
 ~~~bash
 python3 scripts/make_docx.py --hits out/命中明细.json --out out/交付/索引.docx --config book.json
-./bin/markpdf book.pdf out/annotations.json out/交付/标注版.pdf
+python3 scripts/markpdf.py book.pdf out/annotations.json out/交付/标注版.pdf   # 跨平台
+# macOS 也可继续用编译好的 ./bin/markpdf（Swift/PDFKit）
 ~~~
 
 或者一条命令走完：
 
 ~~~bash
-bash scripts/run_pipeline.sh book.pdf book.json out/
+python3 scripts/run_pipeline.py book.pdf book.json out/      # 跨平台
+bash scripts/run_pipeline.sh book.pdf book.json out/          # macOS 便捷入口
 ~~~
 
 Word 单独输入时用 scripts/word_scan.py；同时有 Word 和 PDF 时，把 PDF 的
@@ -145,6 +147,8 @@ lines.jsonl 传给它做页码对齐（Word 没有固定页码，页码要借 PD
 | 现象 | 原因 | 解法 |
 |---|---|---|
 | swiftc 报 Operation not permitted 或直接崩溃 | 沙箱/含空格路径下 clang 写不了默认模块缓存 | 把 -module-cache-path 指到无空格目录，见 scripts/build_swift.sh |
+| Windows 上 OCR 报缺依赖 | 未装 RapidOCR | `python scripts/setup_env.py`（装 rapidocr + onnxruntime） |
+| RapidOCR 偶尔漏一行小字 | 检测端把长边缩得太小 | 调大 scripts/ocr_rapid.py 的 `--limit-side-len`（默认 2000） |
 | 关键词总少几处 | OCR 把词拆到两行 | terms 用 \s* 连接每个字 |
 | 目录页的关键词搜不到 | 标题行被排除在检索之外 | 标题也检索，并单列"目录条目" |
 | 目录条目配不到页码 | 条目文字与页码是两行 | 按 y 坐标就近配对 |
@@ -174,6 +178,8 @@ lines.jsonl 传给它做页码对齐（Word 没有固定页码，页码要借 PD
 
 ## 兼容性
 
-- OCR 路径依赖 macOS（Vision 框架 + swiftc）；文字版 PDF 与 Word 路径跨平台可用
-  （需要 pdftotext，以及 pandoc 或 macOS 自带的 textutil）。
-- 生成 Word 需要 python-docx：bash scripts/setup_env.sh 会建好 .venv。
+- **三平台一致**：扫描件 OCR + 页码校准 + 零漏检审计 + 索引 Word + 标注 PDF 在 Windows / macOS / Linux 都能跑。
+- OCR 后端自适应：macOS 用本机 Vision（bin/ocrpdf），Windows/Linux 用 RapidOCR（scripts/ocr_rapid.py）；`--ocr vision|rapid` 可强制。
+- PDF 高亮：macOS 可用 markpdf（Swift），其余平台用 markpdf.py（PyMuPDF）；run_pipeline.py 自动选。
+- 文字层抽取优先 pdftotext，缺失时回退 PyMuPDF；Word 输入优先 pandoc。
+- 依赖：`python scripts/setup_env.py` 建好缓存 venv（python-docx/pymupdf/rapidocr/onnxruntime）。

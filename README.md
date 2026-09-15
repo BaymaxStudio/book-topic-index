@@ -4,7 +4,8 @@
 
 [![Agent Skills](https://img.shields.io/badge/Agent_Skills-Compatible-blueviolet)](https://github.com/anthropics/skills)
 [![Claude Code](https://img.shields.io/badge/Claude_Code-Skill-orange)](https://docs.anthropic.com/en/docs/claude-code)
-[![macOS](https://img.shields.io/badge/OCR-macOS_Vision-black)](https://developer.apple.com/documentation/vision)
+[![Platform](https://img.shields.io/badge/platform-Windows_%7C_macOS_%7C_Linux-2ea44f)](#兼容性)
+[![OCR](https://img.shields.io/badge/OCR-Vision_%7C_RapidOCR-black)](https://github.com/RapidAI/RapidOCR)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![skills.sh](https://img.shields.io/badge/skills.sh-BaymaxStudio%2Fbook--topic--index-6f42c1)](https://skills.sh/b/BaymaxStudio/book-topic-index)
 
@@ -48,7 +49,7 @@
 因为有三件事 Agent 临时做不到：
 
 1. **印刷页码 ≠ PDF 页码**。纸书前面有封面、目录、序言，PDF 第 12 页可能是书里的第 2 页。这个 Skill 读每页页眉/页脚的页码，用**众数投票**自动算出整本书的偏移量，并把投票证据留在 统计.json 里。
-2. **扫描件没有文字层**，`pdftotext` 只能提出水印。这个 Skill 自动判别并走 macOS Vision 做 OCR。
+2. **扫描件没有文字层**，`pdftotext` 只能提出水印。这个 Skill 自动判别并走 OCR：macOS 用本机 Vision，Windows / Linux 用 RapidOCR（同为离线、无需联网）。
 3. **"查全了"需要能对账**。它会把原文里关键词的真实出现次数和检索结果逐页对账，任何漏页都会暴露出来——这是能写进论文的前提。
 
 ## 快速开始
@@ -61,7 +62,7 @@ npx skills add BaymaxStudio/book-topic-index
 
 > 这本书的扫描件在 ~/Downloads/book.pdf，帮我把里面所有讲「意识形态」的地方找出来，标出书里的页码和原文，给我一份 Word 索引和一份标黄的 PDF。
 
-首次运行会自动准备依赖（`python-docx`）和编译 OCR 工具，产物落在缓存目录，不污染 Skill 目录。
+首次运行会自动准备依赖并在缓存目录建 venv（`python scripts/setup_env.py` 会装 `python-docx` / `pymupdf` / `rapidocr` / `onnxruntime`），产物与二进制都落在缓存目录，不污染 Skill 目录。
 
 ## 触发方式
 
@@ -79,7 +80,7 @@ npx skills add BaymaxStudio/book-topic-index
 
 **输入**：一本 531 页的扫描版 PDF + 关键词「意识形态」
 
-**过程**：自动判别为扫描件 → Vision OCR 300dpi → 按行距与缩进还原段落 →
+**过程**：自动判别为扫描件 → OCR 300dpi（macOS Vision / 其他平台 RapidOCR）→ 按行距与缩进还原段落 →
 读取页眉页码算出偏移 15 → 检索并做零漏检审计
 
 **输出**：
@@ -130,7 +131,7 @@ AUC 0.806 意味着约 19% 排序错误。对"召回不能漏"的研究场景，
 ## 安全边界
 
 - **只读原文件**：不会修改你的输入 PDF；标注版是另存的新文件。
-- **不联网**：OCR 用 macOS 本机 Vision 框架，全程离线，不上传任何内容。
+- **不联网**：OCR 用本机 Vision（macOS）或 RapidOCR（内置离线模型），全程离线，不上传任何内容。
 - **写入范围**：只写你指定的输出目录，以及缓存目录 `~/.cache/book-topic-index/`（依赖与二进制）。Skill 目录保持只读可用。
 - **会停下来问你的情况**：判断不出扫描件还是文字版时、页码校准投票分散时、要扩大检索词范围时。
 - **OCR 的诚实声明**：扫描版正文约 99% 准确，个别错字存在。**正式引用前请对照标注版 PDF 核对**；提供 Word 版可消除 OCR 错字。
@@ -143,18 +144,28 @@ book-topic-index/
 ├── README.md             本文件
 ├── scripts/
 │   ├── pdf_lines.py      PDF → 逐行文本+坐标（自动判别扫描/文字版）
+│   ├── ocr_rapid.py      跨平台 OCR 后端（RapidOCR，Win/macOS/Linux）
 │   ├── scan.py           切段 + 页码众数校准 + 检索
 │   ├── audit.py          零漏检审计（对账工具）
 │   ├── make_docx.py      生成勘校索引版式 Word
 │   ├── word_scan.py      Word 文本通道 + 页码对齐
-│   ├── ocrpdf.swift      macOS Vision OCR
-│   ├── markpdf.swift     PDF 高亮回写
-│   ├── build_swift.sh    编译（产物落缓存目录）
-│   ├── setup_env.sh      准备 python 依赖
-│   └── run_pipeline.sh   一条命令跑完
+│   ├── ocrpdf.swift      macOS Vision OCR（可选高质量后端）
+│   ├── markpdf.swift     macOS PDF 高亮（可选）
+│   ├── markpdf.py        跨平台 PDF 高亮（PyMuPDF）
+│   ├── build_swift.sh    编译 macOS 工具（产物落缓存目录）
+│   ├── setup_env.py      跨平台准备 python 依赖
+│   ├── setup_env.sh      macOS 便捷入口
+│   ├── run_pipeline.py   跨平台一条命令跑完
+│   ├── run_pipeline.sh   macOS 便捷入口
+│   ├── selftest.py       程序化验收（跑链路 + 断言）
+│   ├── check_schema.py   校验 lines.jsonl / annotations.json
+│   └── make_fixture.py   生成合成扫描样本（CI / smoke）
 ├── references/
 │   ├── pipeline.md       段落切分阈值、页码校准算法、排障清单
 │   └── docx-design.md    Word 版式设计系统与 OOXML 踩坑
+├── requirements.txt      基础依赖（python-docx + pymupdf）
+├── requirements-ocr.txt  追加跨平台 OCR（rapidocr + onnxruntime）
+├── .github/workflows/    CI：三平台 smoke
 └── evals/
     └── evals.json        测试用例与客观断言
 ```
@@ -162,8 +173,12 @@ book-topic-index/
 ## 验证与测试
 
 ```bash
+# 跨平台一条命令（Windows / macOS / Linux）
+python scripts/run_pipeline.py <book.pdf> <book.json> <outdir>
+# macOS 也可继续用 bash 入口
 bash scripts/run_pipeline.sh <book.pdf> <book.json> <outdir>
-python3 scripts/audit.py --lines <outdir>/lines.jsonl --hits <outdir>/命中明细.json --config <book.json>
+# 程序化验收：跑链路并断言页码偏移 / 命中数 / 产物
+python scripts/selftest.py --pdf <book.pdf> --config <book.json> --out <outdir> --ocr rapid
 ```
 
 **不许退化的基线**（三本真书，任何改动后必须仍然成立）：
@@ -176,9 +191,31 @@ python3 scripts/audit.py --lines <outdir>/lines.jsonl --hits <outdir>/命中明�
 
 ## 兼容性
 
-- OCR 路径依赖 **macOS**（Vision 框架 + swiftc）。
-- 文字版 PDF 与 Word 路径跨平台可用（需要 `pdftotext`，以及 `pandoc` 或 macOS 自带 `textutil`）。
-- 生成 Word 需要 `python-docx`，`setup_env.sh` 会自动装好。
+**三平台能力一致**：扫描件 OCR、页码校准、零漏检审计、索引 Word、标注版 PDF 在 Windows / macOS / Linux 都能跑。
+
+| 环节 | macOS | Windows / Linux |
+|---|---|---|
+| 扫描件 OCR | 本机 Vision（默认，快且准） | RapidOCR（内置模型，离线） |
+| PDF 高亮 | PDFKit（默认） | PyMuPDF |
+| 文字层抽取 | pdftotext，缺失时 PyMuPDF | 同上 |
+| 页码校准 / 审计 / Word 索引 | 纯 Python | 纯 Python |
+
+`--ocr auto` 自动选后端：macOS 且 Swift 可用时用 Vision，否则用 RapidOCR。
+
+### 安装
+
+```bash
+# 一行装齐（三平台通用）
+python scripts/setup_env.py
+
+# 或手动
+pip install -r requirements-ocr.txt     # 跨平台 OCR（Windows/Linux 必需）
+pip install -r requirements.txt         # 只要 Word/PDF 基础时
+```
+
+Windows 额外可选：`winget install JohnMacFarlane.Pandoc`（用于 Word 输入）。`pdftotext`（poppler）非必需——没有时自动回退 PyMuPDF。
+
+**RapidOCR 的诚实声明**：模型内置离线，中文印刷体质量接近本机 Vision。实测同一扫描节选，页码偏移、命中页集合、命中段落数与本机 Vision **完全一致**；因检测端缩放，个别小字行可能漏检（默认 `--limit-side-len 2000`，可调大）。正式引用前请对照标注版 PDF。
 
 ## 致谢
 

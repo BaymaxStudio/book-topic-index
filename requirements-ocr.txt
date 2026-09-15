@@ -1,0 +1,4 @@
+# 跨平台扫描件 OCR（Windows / Linux 必需；macOS 用本机 Vision 时可只装 requirements.txt）
+-r requirements.txt
+rapidocr>=3.0
+onnxruntime>=1.17

@@ -1,0 +1,29 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  smoke:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements-ocr.txt
+      - name: Generate synthetic scanned fixture
+        run: python scripts/make_fixture.py
+      - name: Cross-platform pipeline smoke (RapidOCR + PyMuPDF)
+        run: python scripts/selftest.py --pdf evals/fixtures/synthetic-scan.pdf --config evals/fixtures/synthetic-book.json --out out --ocr rapid
+      - name: Validate lines.jsonl and annotations.json schema
+        run: python scripts/check_schema.py out

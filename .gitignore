@@ -4,6 +4,8 @@ __pycache__/
 *.pyc
 .DS_Store
 evals/fixtures/
+.tmp-test/
+:memory:.ses
 demo/frames/
 node_modules/
 *.skill

@@ -3,8 +3,9 @@
 ## 数据流
 
 ~~~
-PDF ──┬─ 文字层≥200字 ──▶ pdftotext -bbox ──┐
-      └─ 否则 ──────────▶ bin/ocrpdf(Vision)─┴─▶ lines.jsonl
+PDF ──┬─ 文字层≥200字 ──▶ pdftotext -bbox（缺失时 PyMuPDF）─┐
+      └─ 否则 ──▶ OCR（macOS: bin/ocrpdf/Vision；             ├─▶ lines.jsonl
+                   其他平台: scripts/ocr_rapid.py/RapidOCR）──┘
                                                     │
                           book.json(terms/noise) ───┼─▶ scan.py ─▶ 命中明细 + annotations + 报告.md
                                                     │
@@ -61,6 +62,8 @@ PDF 坐标 y = 页面高度 − 归一化 y 顶部 − 行高。
 | 页码大量错位 | 看 统计.json 的偏移投票是否分散；确认书的页码是否分段编号 |
 | 章节名串页 | 换章时是否清空了节名；页眉缺失页是否兜底 |
 | OCR 明显错字 | 换 Word 文本源；或提高 dpi（pdf_lines.py --dpi 400） |
+| RapidOCR 漏检小字 | 调大 scripts/ocr_rapid.py 的 --limit-side-len（默认 2000）；仍漏则用 macOS Vision 或 Word 源 |
+| Windows 无 pdftotext | 正常：自动回退 PyMuPDF 取词级坐标 |
 | docx 打不开或掉格式 | officecli validate；查手工 XML 的插入次序 |
 
 ## 参数默认值与调整
