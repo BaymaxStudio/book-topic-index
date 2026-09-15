@@ -19,8 +19,11 @@ import json
 import sys
 from pathlib import Path
 
+from bti_console import force_utf8
+
 
 def main():
+    force_utf8()
     ap = argparse.ArgumentParser(description="RapidOCR: scanned PDF -> lines.jsonl")
     ap.add_argument("pdf")
     ap.add_argument("outdir")

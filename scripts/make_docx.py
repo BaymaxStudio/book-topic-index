@@ -19,6 +19,8 @@ from docx.enum.style import WD_STYLE_TYPE
 from docx.oxml.ns import qn
 from docx.oxml import OxmlElement
 
+from bti_console import force_utf8
+
 INK      = RGBColor(0x16, 0x18, 0x1D)   # 墨
 INDIGO   = RGBColor(0x1F, 0x3A, 0x5F)   # 靛：结构色
 VERM     = RGBColor(0xA8, 0x32, 0x2A)   # 朱：只给关键词
@@ -112,6 +114,7 @@ def page_field(p, size=8.5, color=SLATE):
     r._r.append(f1); r._r.append(it); r._r.append(f2)
 
 def main():
+    force_utf8()
     ap = argparse.ArgumentParser()
     ap.add_argument("--hits", required=True)
     ap.add_argument("--out", required=True)

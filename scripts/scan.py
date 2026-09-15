@@ -11,6 +11,8 @@
 import argparse, json, os, re, csv, statistics as st
 from collections import Counter, OrderedDict
 
+from bti_console import force_utf8
+
 DEFAULT_NOISE = ["欢迎关注", "关注公众号", "扫码", "微信", "学习理论"]
 DEFAULT_TERMS = [r"意识\s*形\s*态"]
 
@@ -130,6 +132,7 @@ def segment(page, noise_re):
             "toc": toc, "toc_like": toc_like, "nums": nums, "nlines": len(lines)}
 
 def main():
+    force_utf8()
     ap = argparse.ArgumentParser()
     ap.add_argument("--lines", required=True)
     ap.add_argument("--out", required=True)

@@ -12,6 +12,8 @@
 """
 import argparse, difflib, json, os, re, subprocess, sys
 
+from bti_console import force_utf8
+
 def extract_paragraphs(path):
     """优先 pandoc，其次 macOS 自带的 textutil"""
     for cmd in (["pandoc", "-t", "plain", str(path)],
@@ -52,6 +54,7 @@ def calibrate(order):
     return offs.most_common(1)[0][0] if offs else 0
 
 def main():
+    force_utf8()
     ap = argparse.ArgumentParser()
     ap.add_argument("--word", required=True)
     ap.add_argument("--out", required=True)

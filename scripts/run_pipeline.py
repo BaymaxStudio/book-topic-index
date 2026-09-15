@@ -16,6 +16,8 @@ import subprocess
 import sys
 from pathlib import Path
 
+from bti_console import force_utf8
+
 HERE = Path(__file__).resolve().parent
 BTI_HOME = Path(os.environ.get("BTI_HOME", os.path.expanduser("~/.cache/book-topic-index")))
 
@@ -23,7 +25,11 @@ BTI_HOME = Path(os.environ.get("BTI_HOME", os.path.expanduser("~/.cache/book-top
 def run(cmd):
     cmd = [str(c) for c in cmd]
     print("+", " ".join(cmd), flush=True)
-    subprocess.run(cmd, check=True)
+    # 子进程强制 UTF-8：Windows 下 scan/audit/make_docx 打印中文会撞上 cp1252 控制台
+    env = dict(os.environ)
+    env.setdefault("PYTHONUTF8", "1")
+    env.setdefault("PYTHONIOENCODING", "utf-8")
+    subprocess.run(cmd, check=True, env=env)
 
 
 def mark_backend(pref):
@@ -36,6 +42,7 @@ def mark_backend(pref):
 
 
 def main():
+    force_utf8()
     ap = argparse.ArgumentParser()
     ap.add_argument("pdf")
     ap.add_argument("config")

@@ -11,7 +11,10 @@
 import argparse, json, os, re, sys
 from collections import Counter
 
+from bti_console import force_utf8
+
 def main():
+    force_utf8()
     ap = argparse.ArgumentParser()
     ap.add_argument("--lines", required=True)
     ap.add_argument("--hits", required=True)

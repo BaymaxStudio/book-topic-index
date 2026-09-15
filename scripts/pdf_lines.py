@@ -17,6 +17,8 @@
 import argparse, json, os, re, shutil, statistics as st, subprocess, sys
 from pathlib import Path
 
+from bti_console import force_utf8
+
 SKILL_ROOT = Path(__file__).resolve().parent.parent
 # 技能目录在分发/安装后常常是只读的，所以把"可写产物"（虚拟环境、编译出的二进制）
 # 放到缓存目录，而不是塞回技能目录里。
@@ -201,8 +203,9 @@ def _swift_ocr_usable():
 def _lines_from_ocr_rapid(pdf, outdir, dpi):
     ocr = SKILL_ROOT / "scripts" / "ocr_rapid.py"
     pages = doc_pages(pdf)
+    env = dict(os.environ, PYTHONUTF8="1", PYTHONIOENCODING="utf-8")
     proc = subprocess.run([sys.executable, str(ocr), str(pdf), str(outdir), "1", str(pages), "--dpi", str(dpi)],
-                          capture_output=True, text=True)
+                          capture_output=True, text=True, env=env)
     if proc.returncode != 0:
         raise SystemExit("RapidOCR 后端失败：\n" + (proc.stderr or proc.stdout))
     n_lines = sum(1 for _ in open(outdir / "lines.jsonl", encoding="utf-8"))
@@ -225,6 +228,7 @@ def lines_from_ocr(pdf, outdir, lang, dpi, backend="auto"):
     return _lines_from_ocr_rapid(pdf, outdir, dpi)
 
 def main():
+    force_utf8()
     ap = argparse.ArgumentParser()
     ap.add_argument("--pdf", required=True)
     ap.add_argument("--out", required=True)

@@ -17,10 +17,13 @@ import subprocess
 import sys
 from pathlib import Path
 
+from bti_console import force_utf8
+
 HERE = Path(__file__).resolve().parent
 
 
 def main():
+    force_utf8()
     ap = argparse.ArgumentParser()
     ap.add_argument("--pdf", required=True)
     ap.add_argument("--config", required=True)

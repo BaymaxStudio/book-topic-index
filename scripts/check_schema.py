@@ -8,10 +8,13 @@ import json
 import sys
 from pathlib import Path
 
+from bti_console import force_utf8
+
 REQ_LINE = {"t", "x", "y", "w", "h", "c"}
 
 
 def main():
+    force_utf8()
     out = Path(sys.argv[1] if len(sys.argv) > 1 else "out")
     lines_file = out / "lines.jsonl"
     annot_file = out / "annotations.json"
